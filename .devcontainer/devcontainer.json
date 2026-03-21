@@ -2,26 +2,26 @@
 // Templates: https://github.com/devcontainers/templates/tree/main/src/debian
 // Image:     https://github.com/devcontainers/images/tree/main/src/base-debian
 {
-    "name": "DcImg: PHP (Yet another Apache Mod-PHP environment)",
-    // https://hub.docker.com/_/buildpack-deps/
-    "image": "buildpack-deps:trixie-curl",
-    // https://containers.dev/features
-    "features": {
-      // https://github.com/devcontainers/features/tree/main/src/common-utils
-      "ghcr.io/devcontainers/features/common-utils:2": {
-        "username": "developer",
-        "userUid": "1000",
-        "userGid": "1000"
-      },
-      // https://github.com/devcontainers/features/tree/main/src/git
-      "ghcr.io/devcontainers/features/git:1": {},
-      // https://github.com/devcontainers/features/tree/main/src/docker-in-docker
-      "ghcr.io/devcontainers/features/docker-in-docker:2": {
-        "version": "latest",
-        "enableNonRootDocker": "true",
-        "moby": "false"
-      }
-    }
-  }
-  
-
+	"name": "DcImg: TYPO3 extension: TEA (Docker-In-Docker environment)",
+	// https://hub.docker.com/_/buildpack-deps/
+	"image": "buildpack-deps:trixie-curl",
+	// https://containers.dev/features
+	"features": {
+		// https://github.com/devcontainers/features/tree/main/src/common-utils
+		"ghcr.io/devcontainers/features/common-utils:2": {
+			"username": "developer",
+			"userUid": "1000",
+			"userGid": "1000",
+			"configureZshAsDefaultShell": true
+		},
+		// https://github.com/devcontainers/features/tree/main/src/git
+		"ghcr.io/devcontainers/features/git:1": {},
+		// https://github.com/devcontainers/features/tree/main/src/docker-in-docker
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {
+			"version": "latest",
+			"enableNonRootDocker": "true",
+			"moby": "false"
+		}
+	},
+	"remoteUser": "developer"
+}
