@@ -21,7 +21,7 @@ printSummary() {
     echo "Container runtime: ${CONTAINER_BIN}" >&2
     echo "Container suffix: ${SUFFIX}"
     if [[ ${TEST_SUITE} =~ ^(npm|lintCss|lintJs)$ ]]; then
-        echo "NODE: ${NODE_VERSION}" >&2
+        echo "NODE: ${IMAGE_NODEJS}" >&2
     else
         echo "PHP: ${PHP_VERSION}" >&2
         echo "TYPO3: ${CORE_VERSION}" >&2
@@ -203,11 +203,15 @@ Options:
             - lintJson: JSON linting
             - lintPhp: PHP linting
             - lintTypoScript: TypoScript linting
+            - lintXliff: XLIFF linting
             - lintYaml: YAML linting
             - npm: "npm" with all remaining arguments dispatched.
+            - phpCsFixer fixes code to follow the standards.
             - phpmd: Checks code metrics in the PHP code using PHPMD.
             - phpstan: PHPStan tests
             - phpstanGenerateBaseline: regenerate PHPStan baseline, handy after PHPStan updates
+            - psr-verify: Verifies PSR-4 namespace correctness.
+            - rector: Fixes and upgrades the PHP code using Rector
             - shellcheck: check runTests.sh for shell issues
             - unit (default): PHP unit tests
             - unitRandom: PHP unit tests in random order, add -o <number> to use specific seed
@@ -270,8 +274,8 @@ Options:
     -t <12.4|13.4>
         Only with -s composerUpdateMin|composerUpdateMax
         Specifies the TYPO3 CORE Version to be used
-            - 12.4: (default) use TYPO3 v12
-            - 13.4: use TYPO3 v13
+            - 12.4: use TYPO3 v12
+            - 13.4: (default) use TYPO3 v13
 
     -p <8.1|8.2|8.3|8.4|8.5>
         Specifies the PHP minor version to be used
@@ -360,7 +364,7 @@ ROOT_DIR="${PWD}"
 
 # Option defaults
 TEST_SUITE="unit"
-CORE_VERSION="12.4"
+CORE_VERSION="13.4"
 DBMS="sqlite"
 DBMS_VERSION=""
 PHP_VERSION="8.2"
@@ -372,7 +376,6 @@ CGLCHECK_DRY_RUN=0
 DATABASE_DRIVER=""
 CONTAINER_BIN=""
 COMPOSER_ROOT_VERSION="3.0.x-dev"
-NODE_VERSION=22
 HELP_TEXT_NPM_CI="Now running \'npm ci --silent\'."
 HELP_TEXT_NPM_FAILURE="npm clean-install has failed. Please run \'${0} -s npm ci\' to explore."
 CONTAINER_INTERACTIVE="-it --init"
@@ -495,9 +498,9 @@ mkdir -p .cache
 mkdir -p .Build/public/typo3temp/var/tests
 
 IMAGE_PHP="ghcr.io/typo3/core-testing-$(echo "php${PHP_VERSION}" | sed -e 's/\.//'):latest"
-IMAGE_NODE="docker.io/node:${NODE_VERSION}-alpine"
+IMAGE_NODEJS="ghcr.io/typo3/core-testing-nodejs24:1.1"
 IMAGE_SHELLCHECK="docker.io/koalaman/shellcheck:v0.11.0"
-IMAGE_DOCS="ghcr.io/typo3-documentation/render-guides:0.36.0"
+IMAGE_DOCS="ghcr.io/typo3-documentation/render-guides:0.37.1"
 IMAGE_MARIADB="docker.io/mariadb:${DBMS_VERSION}"
 IMAGE_MYSQL="docker.io/mysql:${DBMS_VERSION}"
 IMAGE_POSTGRES="docker.io/postgres:${DBMS_VERSION}-alpine"
@@ -585,9 +588,9 @@ case ${TEST_SUITE} in
         COMMAND="composer fix"
         ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-command-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} /bin/sh -c "${COMMAND}"
         COMMAND="echo ${HELP_TEXT_NPM_CI}; npm ci --silent || { echo ${HELP_TEXT_NPM_FAILURE}; exit 1; } && npm run fix:lint:js"
-        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name npm-command-${SUFFIX} ${IMAGE_NODE} /bin/sh -c "${COMMAND}"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name npm-command-${SUFFIX} ${IMAGE_NODEJS} /bin/sh -c "${COMMAND}"
         COMMAND="echo ${HELP_TEXT_NPM_CI}; npm ci --silent || { echo ${HELP_TEXT_NPM_FAILURE}; exit 1; } && npm run fix:lint:css"
-        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name npm-command-${SUFFIX} ${IMAGE_NODE} /bin/sh -c "${COMMAND}"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name npm-command-${SUFFIX} ${IMAGE_NODEJS} /bin/sh -c "${COMMAND}"
         SUITE_EXIT_CODE=$?
         ;;
     fixComposerNormalize)
@@ -634,7 +637,7 @@ case ${TEST_SUITE} in
         else
             COMMAND="echo ${HELP_TEXT_NPM_CI}; npm ci --silent || { echo ${HELP_TEXT_NPM_FAILURE}; exit 1; } && npm run fix:lint:css"
         fi
-        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name npm-command-${SUFFIX} ${IMAGE_NODE} /bin/sh -c "${COMMAND}"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name npm-command-${SUFFIX} ${IMAGE_NODEJS} /bin/sh -c "${COMMAND}"
         SUITE_EXIT_CODE=$?
         ;;
     lintJs)
@@ -643,7 +646,7 @@ case ${TEST_SUITE} in
         else
             COMMAND="echo ${HELP_TEXT_NPM_CI}; npm ci --silent || { echo ${HELP_TEXT_NPM_FAILURE}; exit 1; } && npm run fix:lint:js"
         fi
-        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name npm-command-${SUFFIX} ${IMAGE_NODE} /bin/sh -c "${COMMAND}"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name npm-command-${SUFFIX} ${IMAGE_NODEJS} /bin/sh -c "${COMMAND}"
         SUITE_EXIT_CODE=$?
         ;;
     lintJson)
@@ -661,6 +664,11 @@ case ${TEST_SUITE} in
         ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-command-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} /bin/sh -c "${COMMAND}"
         SUITE_EXIT_CODE=$?
         ;;
+    lintXliff)
+        COMMAND="php Build/Scripts/xliffLint.sh lint:xliff Resources/Private/Language"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name lintxliff-${SUFFIX} ${IMAGE_PHP} ${COMMAND}
+        SUITE_EXIT_CODE=$?
+        ;;
     lintYaml)
         COMMAND="composer check:yaml:lint"
         ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-command-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} /bin/sh -c "${COMMAND}"
@@ -668,7 +676,15 @@ case ${TEST_SUITE} in
         ;;
     npm)
         COMMAND=(npm "$@")
-        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name npm-command-${SUFFIX} ${IMAGE_NODE} "${COMMAND[@]}"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name npm-command-${SUFFIX} ${IMAGE_NODEJS} "${COMMAND[@]}"
+        SUITE_EXIT_CODE=$?
+        ;;
+    phpCsFixer)
+        if [ -n "${CGLCHECK_DRY_RUN}" ]; then
+            CGLCHECK_DRY_RUN="--dry-run --diff"
+        fi
+        COMMAND="php .Build/bin/php-cs-fixer fix -v ${CGLCHECK_DRY_RUN} --config=Build/php-cs-fixer/config.php"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name phpcsfixer-${SUFFIX} ${IMAGE_PHP} ${COMMAND}
         SUITE_EXIT_CODE=$?
         ;;
     phpmd)
@@ -686,6 +702,11 @@ case ${TEST_SUITE} in
         ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-command-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} /bin/sh -c "${COMMAND}"
         SUITE_EXIT_CODE=$?
         ;;
+    psr-verify)
+            COMMAND="composer dumpautoload --optimize --strict-psr --no-plugins"
+            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name psr-verify-${SUFFIX} ${IMAGE_PHP} ${COMMAND}
+            SUITE_EXIT_CODE=$?
+            ;;
     shellcheck)
         ${CONTAINER_BIN} run ${CONTAINER_INTERACTIVE} --rm --pull always ${USERSET} -v "${ROOT_DIR}":/project:ro ${IMAGE_SHELLCHECK} /project/Build/Scripts/runTests.sh
         SUITE_EXIT_CODE=$?
@@ -707,6 +728,14 @@ case ${TEST_SUITE} in
         echo "> remove \"dangling\" ghcr.io/typo3/core-testing-* images (those tagged as <none>)"
         ${CONTAINER_BIN} images --filter "reference=ghcr.io/typo3/core-testing-*" --filter "dangling=true" --format "{{.ID}}" | xargs -I {} ${CONTAINER_BIN} rmi {}
         echo ""
+        ;;
+     rector)
+        if [ -n "${CGLCHECK_DRY_RUN}" ]; then
+            CGLCHECK_DRY_RUN="--dry-run"
+        fi
+        COMMAND=".Build/bin/rector process ${CGLCHECK_DRY_RUN} --config=Build/rector/config.php"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name cgl-${SUFFIX} ${IMAGE_PHP} ${COMMAND}
+        SUITE_EXIT_CODE=$?
         ;;
     *)
         loadHelp

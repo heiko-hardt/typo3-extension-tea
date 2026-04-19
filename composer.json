@@ -41,14 +41,15 @@
 	"require": {
 		"php": "~8.1.0 || ~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
 		"psr/http-message": "^1.0.1",
-		"typo3/cms-core": "^12.4.41",
+		"typo3/cms-core": "^12.4.41 || ^13.4",
 		"typo3/cms-extbase": "^12.4.41 || ^13.4",
 		"typo3/cms-fluid": "^12.4.41 || ^13.4",
-		"typo3/cms-frontend": "^12.4.41 || ^13.4"
+		"typo3/cms-frontend": "^12.4.41 || ^13.4",
+		"typo3/cms-install": "^12.4.41 || ^13.4"
 	},
 	"require-dev": {
-		"ergebnis/composer-normalize": "2.50.0",
-		"friendsofphp/php-cs-fixer": "3.94.2",
+		"ergebnis/composer-normalize": "2.51.0",
+		"friendsofphp/php-cs-fixer": "3.95.1",
 		"helmich/typo3-typoscript-lint": "3.3.0",
 		"icanhazstring/composer-unused": "0.8.11 || 0.9.6",
 		"php-parallel-lint/php-parallel-lint": "1.4.0",
@@ -61,7 +62,7 @@
 		"rector/type-perfect": "1.0.0 || 2.1.2",
 		"saschaegerer/phpstan-typo3": "1.10.2 || 2.1.1",
 		"seld/jsonlint": "1.11.0",
-		"spaze/phpstan-disallowed-calls": "4.9.0",
+		"spaze/phpstan-disallowed-calls": "4.10.0",
 		"ssch/typo3-rector": "2.15.2 || 3.11.0",
 		"ssch/typo3-rector-testing-framework": "2.0.1 || 3.0.0",
 		"symfony/console": "^6.4 || ^7.4",
@@ -104,7 +105,7 @@
 	},
 	"extra": {
 		"branch-alias": {
-			"dev-main": "4.0.x-dev"
+			"dev-main": "4.1.x-dev"
 		},
 		"typo3/cms": {
 			"extension-key": "tea",
@@ -165,7 +166,6 @@
 		"check:xliff:lint": "php Build/Scripts/xliffLint.sh lint:xliff Resources/Private/Language",
 		"check:yaml:lint": "find . ! -path '*.Build/*' ! -path '*node_modules/*' \\( -name '*.yaml' -o -name '*.yml' \\) | xargs -r php ./.Build/bin/yaml-lint",
 		"coverage:create-directories": "mkdir -p build/coverage build/logs",
-		"docs:generate": "docker run --rm --pull always -v $(pwd):/project -it ghcr.io/typo3-documentation/render-guides:latest --config=Documentation",
 		"fix": [
 			"@fix:composer:normalize",
 			"@fix:php"
@@ -217,7 +217,6 @@
 		"check:xliff:lint": "Lints the XLIFF files.",
 		"check:yaml:lint": "Lints the YAML files.",
 		"coverage:create-directories": "Creates the directories needed for recording and merging the code coverage reports.",
-		"docs:generate": "Renders the extension ReST documentation.",
 		"fix": "Runs all automatic code style fixes.",
 		"fix:composer:normalize": "Normalizes composer.json file content.",
 		"fix:php": "Runs all fixers for the PHP code.",

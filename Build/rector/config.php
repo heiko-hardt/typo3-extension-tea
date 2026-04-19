@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
 use Rector\PHPUnit\Set\PHPUnitSetList;
-use Rector\Set\ValueObject\LevelSetList;
 use Rector\TypeDeclaration\Rector\ClassMethod\AddVoidReturnTypeWhereNoReturnRector;
-use Rector\ValueObject\PhpVersion;
-use Ssch\TYPO3Rector\CodeQuality\General\ConvertImplicitVariablesToExplicitGlobalsRector;
 use Ssch\TYPO3Rector\CodeQuality\General\ExtEmConfRector;
 use Ssch\TYPO3Rector\Configuration\Typo3Option;
 use Ssch\TYPO3Rector\Set\Typo3LevelSetList;
@@ -22,15 +19,9 @@ return RectorConfig::configure()
         __DIR__ . '/../../ext_emconf.php',
         __DIR__ . '/../../ext_localconf.php',
     ])
-    ->withPhpVersion(PhpVersion::PHP_81)
     ->withPhpSets()
     ->withSets([
         // Rector sets
-
-        LevelSetList::UP_TO_PHP_81,
-        // LevelSetList::UP_TO_PHP_82,
-        // LevelSetList::UP_TO_PHP_83,
-        // LevelSetList::UP_TO_PHP_84,
 
         // SetList::CODE_QUALITY,
         // SetList::CODING_STYLE,
@@ -64,12 +55,11 @@ return RectorConfig::configure()
     ])
     ->withRules([
         AddVoidReturnTypeWhereNoReturnRector::class,
-        ConvertImplicitVariablesToExplicitGlobalsRector::class,
     ])
     ->withImportNames(true, true, false)
     ->withConfiguredRule(ExtEmConfRector::class, [
         ExtEmConfRector::PHP_VERSION_CONSTRAINT => '8.1.0-8.5.99',
-        ExtEmConfRector::TYPO3_VERSION_CONSTRAINT => '12.4.41-12.4.99',
+        ExtEmConfRector::TYPO3_VERSION_CONSTRAINT => '12.4.41-13.4.99',
         ExtEmConfRector::ADDITIONAL_VALUES_TO_BE_REMOVED => [],
     ])
     ->withSkip([

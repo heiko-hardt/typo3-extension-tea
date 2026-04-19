@@ -18,20 +18,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Install Composer dependencies
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php-version }} -s composerUpdateMax -t 13.4
+      - name: Show the Composer version
+        run: ./Build/Scripts/runTests.sh -s composer -- --version
+      - name: Show the Composer configuration
+        run: ./Build/Scripts/runTests.sh -s composer config --global --list
+      - name: Install composer dependencies
+        run: |
+          ./Build/Scripts/runTests.sh -p ${{ matrix.php-version }} -t ${{matrix.typo3-version}} -s composerUpdate${{matrix.composer-dependencies}}
       - name: Lint PHP
         run: |
           Build/Scripts/runTests.sh -p ${{ matrix.php-version }} -s lintPhp
     strategy:
       fail-fast: false
       matrix:
-        php-version:
-          - "8.1"
-          - "8.2"
-          - "8.3"
-          - "8.4"
-          - "8.5"
+        include:
+          - typo3-version: "12.4"
+            php-version: "8.1"
+            composer-dependencies: Max
+          - typo3-version: "13.4"
+            php-version: "8.2"
+            composer-dependencies: Max
+          - typo3-version: "13.4"
+            php-version: "8.3"
+            composer-dependencies: Max
+          - typo3-version: "13.4"
+            php-version: "8.4"
+            composer-dependencies: Max
+          - typo3-version: "13.4"
+            php-version: "8.5"
+            composer-dependencies: Max
   code-quality:
     name: Code quality checks
     runs-on: ubuntu-24.04
@@ -41,12 +56,13 @@ jobs:
       - name: Show the Composer version
         run: ./Build/Scripts/runTests.sh -s composer -- --version
       - name: Show the Composer configuration
-        run:  ./Build/Scripts/runTests.sh -s composer config --global --list
-      - name: Install Composer dependencies
-        run: Build/Scripts/runTests.sh -s composerUpdateMax
+        run: ./Build/Scripts/runTests.sh -s composer config --global --list
+      - name: Install composer dependencies
+        run: |
+          ./Build/Scripts/runTests.sh -p ${{ matrix.php-version }} -t ${{matrix.typo3-version}} -s composerUpdate${{matrix.composer-dependencies}}
       - name: Run code quality checks
         run: |
-          Build/Scripts/runTests.sh -s composer check:${{ matrix.command }}
+          Build/Scripts/runTests.sh -p ${{ matrix.php-version }} -s composer check:${{ matrix.command }}
     strategy:
       fail-fast: false
       matrix:
@@ -60,6 +76,14 @@ jobs:
           - "typoscript:lint"
           - "xliff:lint"
           - "yaml:lint"
+        # For consistency, the PHP version should match the default PHP version in `runTests.sh`.
+        php-version:
+          - "8.2"
+        # For consistency, the TYPO3 version should match the default TYPO3 version in `runTests.sh`.
+        typo3-version:
+          - "13.4"
+        composer-dependencies:
+          - Max
   static-code-analysis:
     name: Static code quality checks
     runs-on: ubuntu-24.04
@@ -70,17 +94,26 @@ jobs:
         run: ./Build/Scripts/runTests.sh -s composer -- --version
       - name: Show the Composer configuration
         run: ./Build/Scripts/runTests.sh -s composer config --global --list
-      - name: Install Composer dependencies
-        run: Build/Scripts/runTests.sh -s composerUpdateMax
+      - name: Install composer dependencies
+        run: |
+          ./Build/Scripts/runTests.sh -p ${{ matrix.php-version }} -t ${{matrix.typo3-version}} -s composerUpdate${{matrix.composer-dependencies}}
       - name: Run code quality checks
         run: |
-          Build/Scripts/runTests.sh -s ${{ matrix.command }}
+          Build/Scripts/runTests.sh -p ${{ matrix.php-version }} -s ${{ matrix.command }}
     strategy:
       fail-fast: false
       matrix:
         command:
           - "phpmd"
           - "checkComposerNormalize"
+        # For consistency, the PHP version should match the default PHP version in `runTests.sh`.
+        php-version:
+          - "8.2"
+        # For consistency, the TYPO3 version should match the default TYPO3 version in `runTests.sh`.
+        typo3-version:
+          - "13.4"
+        composer-dependencies:
+          - Max
   check-fixers:
     name: Check fixers
     runs-on: ubuntu-24.04
@@ -91,10 +124,22 @@ jobs:
         run: ./Build/Scripts/runTests.sh -s composer -- --version
       - name: Show the Composer configuration
         run: ./Build/Scripts/runTests.sh -s composer config --global --list
-      - name: Install Composer dependencies
-        run: Build/Scripts/runTests.sh -s composerUpdateMax
+      - name: Install composer dependencies
+        run: |
+          ./Build/Scripts/runTests.sh -p ${{ matrix.php-version }} -t ${{matrix.typo3-version}} -s composerUpdate${{matrix.composer-dependencies}}
       - name: Runs all automatic code style fixes.
-        run: Build/Scripts/runTests.sh -s fix
+        run: Build/Scripts/runTests.sh -p ${{ matrix.php-version }} -s fix
+    strategy:
+      fail-fast: false
+      matrix:
+        # For consistency, the PHP version should match the default PHP version in `runTests.sh`.
+        php-version:
+          - "8.2"
+        # For consistency, the TYPO3 version should match the default TYPO3 version in `runTests.sh`.
+        typo3-version:
+          - "13.4"
+        composer-dependencies:
+          - Max
   prepare-release:
     name: Check prepare release script
     runs-on: ubuntu-24.04
@@ -133,7 +178,7 @@ jobs:
       - name: Show the Composer version
         run: ./Build/Scripts/runTests.sh -s composer -- --version
       - name: Show the Composer configuration
-        run:  ./Build/Scripts/runTests.sh -s composer config --global --list
+        run: ./Build/Scripts/runTests.sh -s composer config --global --list
       - name: Install composer dependencies
         run: |
           ./Build/Scripts/runTests.sh -p ${{ matrix.php-version }} -t ${{matrix.typo3-version}} -s composerUpdate${{matrix.composer-dependencies}}
@@ -156,6 +201,18 @@ jobs:
           - typo3-version: "12.4"
             php-version: "8.5"
             composer-dependencies: Max
+          - typo3-version: "13.4"
+            php-version: "8.2"
+            composer-dependencies: Min
+          - typo3-version: "13.4"
+            php-version: "8.3"
+            composer-dependencies: Min
+          - typo3-version: "13.4"
+            php-version: "8.4"
+            composer-dependencies: Min
+          - typo3-version: "13.4"
+            php-version: "8.5"
+            composer-dependencies: Max
   functional-tests:
     name: Functional tests
     runs-on: ubuntu-24.04
@@ -166,7 +223,7 @@ jobs:
       - name: Show the Composer version
         run: ./Build/Scripts/runTests.sh -s composer -- --version
       - name: Show the Composer configuration
-        run:  ./Build/Scripts/runTests.sh -s composer config --global --list
+        run: ./Build/Scripts/runTests.sh -s composer config --global --list
       - name: Install composer dependencies
         run: |
           ./Build/Scripts/runTests.sh -p ${{ matrix.php-version }} -t ${{matrix.typo3-version}} -s composerUpdate${{matrix.composer-dependencies}}
@@ -189,6 +246,18 @@ jobs:
           - typo3-version: "12.4"
             php-version: "8.5"
             composer-dependencies: Max
+          - typo3-version: "13.4"
+            php-version: "8.2"
+            composer-dependencies: Min
+          - typo3-version: "13.4"
+            php-version: "8.2"
+            composer-dependencies: Max
+          - typo3-version: "13.4"
+            php-version: "8.5"
+            composer-dependencies: Min
+          - typo3-version: "13.4"
+            php-version: "8.5"
+            composer-dependencies: Max
   shellcheck:
     name: Check shell scripts
     runs-on: ubuntu-24.04
@@ -208,5 +277,4 @@ jobs:
         uses: actions/checkout@v6
       - name: Test if the documentation will render without warnings
         run: |
-          docker run --rm --pull always -v $(pwd):/project \
-             ghcr.io/typo3-documentation/render-guides:latest --config=Documentation --no-progress --fail-on-log
+          Build/Scripts/runTests.sh -s docsGenerate
